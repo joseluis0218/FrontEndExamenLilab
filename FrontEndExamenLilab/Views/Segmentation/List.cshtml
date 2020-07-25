@@ -1,0 +1,158 @@
+﻿@model IEnumerable<FrontEndExamenLilab.Models.SegmentationModel>
+
+@{
+    ViewBag.Title = "Listado";
+}
+
+<h2>Listado de Segmentaciones</h2>
+
+<table id="tblSegment" class="table table-bordered table-striped table-responsive table-hover" style="margin-top : 15px">
+    <tr>
+        <th align="left">
+            ID Segmentación
+        </th>
+        <th align="left">
+            Nombre Segmentación
+        </th>
+        <th align="left">
+            Fecha Creación
+        </th>
+        <th>Acciones</th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @item.id
+            </td>
+            <td>
+                @item.name
+            </td>
+            <td>
+                @item.createdAt
+            </td>
+            <td>
+                <button type="button" class="btn btn-primary" id="btnModalUpdate" data-id=@item.id data-name="@item.name">Editar</button>|
+                <button type="button" class="btn btn-primary" id="btnModalDelete" data-id=@item.id>Eliminar</button>
+                @*@Html.ActionLink("Edit", "Edit", new { id = item.id }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.id })*@
+            </td>
+        </tr>
+    }
+
+</table>
+
+
+<!-- Modal DELETE -->
+<div class="modal fade" id="modalDelete" tabindex="-1" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">¿Estás seguro de eliminar este segmento?</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="btnUpdateSegment">Close</button>
+                <button type="button" class="btn btn-primary" id="btnDeleteSegment">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal UPDATE -->
+
+<div class="modal fade" id="modalUpdate" tabindex="-1" role="dialog" aria-labelledby="exampleUpdateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleUpdateModalLabel">Actualizar segmentación</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label for="segmentationName" class="col-form-label">Nombre Segmentación:</label>
+                        <input type="text" class="form-control" id="segmentationName">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnUpdate">Actualizar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+
+    <script type="text/javascript">
+
+        //Funcion para eliminar un segmento
+        $('#tblSegment').on('click', '#btnModalDelete', function () {
+            var segmentId = $(this).data('id');
+            $('#modalDelete').modal('show');
+            $("#btnDeleteSegment").click(function () {
+                var segment = {};
+                //Order
+                segment.id = segmentId;
+                //segment.Comments = $("#Description").val();
+                console.log("segment", segment);
+                //console.log("DATA", JSON.stringify(segment));
+               $.ajax({
+                    type: "POST",
+                   url: '@Url.Action("Delete","Segmentation")',
+                   data: '{ segmentationModel: ' + JSON.stringify(segment) + '}',
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                   success: function () {
+                       //LoadData();
+                       $('#modalDelete').modal('hide');
+                       window.location.reload();
+                    },
+                    error: function (error) {
+                        alert("Error al intentar eliminar el segmento", error);
+                    }
+                });
+                return false;
+            });
+        });
+
+        //Funcion para actualizar un segmento
+        $('#tblSegment').on('click', '#btnModalUpdate', function () {
+
+            console.log("eNTRO")
+            var segmentId = $(this).data('id');
+            var segmentationName = $(this).data('name');
+            $('#modalUpdate').modal('show');
+            $("#segmentationName").val(segmentationName);
+            $("#btnUpdate").click(function () {
+                var segment = {};
+                segment.id = segmentId;
+                segment.name =  $("#segmentationName").val();
+                console.log("segment", segment);
+               $.ajax({
+                    type: "POST",
+                   url: '@Url.Action("Update","Segmentation")',
+                   data: '{ segmentationModel: ' + JSON.stringify(segment) + '}',
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                   success: function () {
+                       //LoadData();
+                       $('#modalUpdate').modal('hide');
+                       window.location.reload();
+                    },
+                    error: function (error) {
+                        alert("Error al intentar actualizar el segmento", error);
+                    }
+                });
+                return false;
+            });
+        });
+    </script>
+}

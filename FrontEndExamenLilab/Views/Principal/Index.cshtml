@@ -1,0 +1,212 @@
+﻿@{
+    ViewBag.Title = "Principal";
+    List<SelectListItem> items = (List<SelectListItem>) ViewBag.items;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+</head>
+<body>
+    <h3>Lista de clientes</h3>
+    <div class="container">
+        <div class="panel-body">
+            <h4>Filtros de Segmentación</h4>
+            <div class="form-group col-md-3">
+                <label>Ultima Actividad</label>
+                @Html.DropDownList("meses", items, "Seleccion un mes", new { @class = "form-control", @id = "lastVisitMonthDropId" })
+            </div>
+            <div class="form-group col-md-3">
+                <label>Mes Cumpleaños</label>
+                @Html.DropDownList("meses", items, "Seleccion un mes", new { @class = "form-control", @id = "birthdayMonthDropId" })
+
+            </div>
+            <div class="form-group col-md-3">
+                <label>Actividad</label>
+                <input type="text" name="LastName" id="activity" class="form-control" placeholder="Actividad" />
+            </div>
+            <div class="form-group col-md-3">
+                <input type="button" name="submitButton" id="btnSave" value="Filtrar" class="btn btn-primary" style="margin-top : 25px"/>
+            </div>
+        </div>
+    </div><hr />
+    @*Carga Modal de Segmentacion*@
+    @{Html.RenderAction("Create", "Segmentation"); }
+    @{Html.RenderAction("Create", "Principal"); }
+
+    <div class="container">
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#segmentModal">Segmentar Resultados</button>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#clientModal">Crear Cliente</button>
+        <table id="tblClient" class="table table-bordered table-striped table-responsive table-hover" style="margin-top : 15px">
+            <thead>
+                <tr>
+                    <th align="left">ID CLIENTE</th>
+                    <th align="left">Nombre</th>
+                    <th align="left">Apellido</th>
+                    <th align="left">Fecha Cumpleaños</th>
+                    <th align="left">Última Acitivdad</th>
+                    <th align="left">Descripción Actividad</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    @section Scripts
+{
+        <script type="text/javascript">
+        $(function () {
+            //LoadData();
+            $("#btnSave").click(function () {
+                var request = {};
+                request.lastVisitMonth = $("#lastVisitMonthDropId").val();
+                request.birthdayMonth = $("#birthdayMonthDropId").val();
+                request.activity= $("#activity").val();
+
+                console.log("request OBJECT", request);
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("GetClientsByFilter")',
+                    data: '{filterRequest: ' + JSON.stringify(request) + '}',
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+
+                        sessionStorage.setItem("CLIENTS", data); // Guarda en sesión los clientes
+
+                        console.log("RESULATO FILTRO", data);
+                        $("#tblClient tbody tr").remove();
+                        $.each(data, function (i, item) {
+                        var rows = "<tr>"
+                        + "<td class='prtducttd'>" + item.id + "</td>"
+                        + "<td class='prtducttd'>" + item.firstName + "</td>"
+                        + "<td class='prtducttd'>" + item.lastName + "</td>"
+                        + "<td class='prtducttd'>" + item.birthdayDate + "</td>"
+                        + "<td class='prtducttd'>" + item.lastActivityDate + "</td>"
+                        + "<td class='prtducttd'>" + item.description + "</td>"
+                        //+ '<td>'
+                        //+ '<button data-id="' + item.OrderID + '" class="btn btn-danger" id="btnDelete"><i class="glyphicon glyphicon-trash"></i></button></td>'
+                        + "</tr>";
+                        + "</tr>";
+                            $('#tblClient tbody').append(rows);
+                        });
+                    },
+                    error: function () {
+                        alert("Error while inserting data");
+                    }
+                });
+                return false;
+            });
+            // Funcion para crear clientes
+            $("#btnCreateClient").click(function () {
+                var client = {};
+                client.firstName = $("#firstName").val();
+                client.lastName = $("#lastName").val();
+                client.email= $("#email").val();
+                client.birthdayDate= $("#birthdayDate").val();
+
+                console.log("request OBJECT", client);
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("CreateClient")',
+                    data: '{clientModel: ' + JSON.stringify(client) + '}',
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        console.log("CLIENTE CREADO",data)
+                        alert("Se creo el cliente correctamente");
+                        window.location.reload();
+
+                    },
+                    error: function () {
+                        alert("Error while inserting data");
+                    }
+                });
+                return false;
+            });
+
+            $("#btnSegment").click(function () {
+                var segmentationRequest = {};
+                segmentationRequest.segmentationName = $("#segmentationName").val();
+                segmentationRequest.segmentationId = $("#segmentsDropID").val();
+
+                //var clients = sessionStorage.getItem("CLIENTS");
+                var clientsId = [];
+
+                $("#tblClient tr").each(function () {
+                    let id = $(this).find("td:first").text();
+                    if (id) {
+
+                    clientsId.push(parseInt(id)); //put elements into array
+                    }
+                });
+                //if (clients != null) {
+
+                //    for (var i = 0; i < clients.length; i++) {
+                //        clientsId.push(clients[i].id);
+                //    }
+                //}
+                segmentationRequest.clients= clientsId; //Recoge de sesion los clientes
+
+                console.log("request OBJECT segmentar", segmentationRequest);
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("CreateSegmentation","Segmentation")',
+                    data: '{segmentationRequest: ' + JSON.stringify(segmentationRequest) + '}',
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        console.log("segmentación CREADO",data)
+                        alert("Se creo la segmentación");
+                        window.location.reload();
+                    },
+                    error: function () {
+                        alert("Error while inserting data");
+                    }
+                });
+                return false;
+            });
+        });
+        function LoadData(data) {
+            $("#tblClient tbody tr").remove();
+            try {
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("GetCustomer")',
+                    dataType: "json",
+                    success: function (data) {
+                        $.each(data, function (i, item) {
+                        var rows = "<tr>"
+                        + "<td class='prtducttd'>" + item.id + "</td>"
+                        + "<td class='prtducttd'>" + item.firstName + "</td>"
+                        + "<td class='prtducttd'>" + item.lastName + "</td>"
+                        + "<td class='prtducttd'>" + item.birthdayDate + "</td>"
+                        + "<td class='prtducttd'>" + item.lastActivityDate + "</td>"
+                        + "<td class='prtducttd'>" + item.description + "</td>"
+                        //+ '<td>'
+                        //+ '<button data-id="' + item.OrderID + '" class="btn btn-danger" id="btnDelete"><i class="glyphicon glyphicon-trash"></i></button></td>'
+                        + "</tr>";
+                        + "</tr>";
+                            $('#tblClient tbody').append(rows);
+                        });
+                    },
+                    error: function (ex) {
+                        var r = jQuery.parseJSON(ex.responseText);
+                        alert("Message: " + r.Message);
+                        alert("StackTrace: " + r.StrackTrace);
+                        alert("ExceptionType : " + r.ExceptionType);
+                    }
+                });
+            } catch (e) { console.log(e);}
+            return false;
+        }
+
+
+        </script>
+    }
+
+</body>
+</html>

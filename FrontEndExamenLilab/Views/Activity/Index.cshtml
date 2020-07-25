@@ -1,0 +1,98 @@
+﻿@model IEnumerable<FrontEndExamenLilab.Models.ActivityResponse>
+
+@{
+    ViewBag.Title = "Actividades";
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+</head>
+<body>
+
+
+    <div class="container">
+        <h2>Listado de Actividades</h2>
+
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#activityModal">Crear Actividad</button>
+
+
+        <table id="tblActivity" class="table table-bordered table-striped table-responsive table-hover" style="margin-top : 15px">
+            <tr>
+                <th align="left">
+                    ID Actividad
+                </th>
+                <th align="left">
+                    Cliente
+                </th>
+                <th align="left">
+                    Descripción
+                </th>
+                <th align="left">
+                    Fecha Actividad
+                </th>
+            </tr>
+
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @item.id
+                    </td>
+                    <td>
+                        @item.Client.firstName   @item.Client.lastName
+                    </td>
+                    <td>
+                        @item.description
+                    </td>
+                    <td>
+                        @item.activityDate
+                    </td>
+
+                </tr>
+            }
+        </table>
+    </div>
+    @{Html.RenderAction("Create", "Activity"); }
+
+    @section Scripts
+{
+        <script type="text/javascript">
+        $(function () {
+            //LoadData();
+            // Funcion para crear actividades
+            $("#btnCreateActivity").click(function () {
+                var activity = {};
+                activity.clientId = $("#clientsDropId").val();
+                activity.description = $("#description").val();
+                activity.activityDate= $("#activityDate").val();
+
+                console.log("request OBJECT", activity);
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("CrateActivity")',
+                    data: '{activityModel: ' + JSON.stringify(activity) + '}',
+                    dataType: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+                        console.log("actividad CREADa",data)
+                        alert("Se creo la activdad correctamente");
+                        window.location.reload();
+                    },
+                    error: function () {
+                        alert("Error al crear una actividad");
+                    }
+                });
+                return false;
+            });
+
+        });
+
+        </script>
+    }
+
+</body>
+</html>
